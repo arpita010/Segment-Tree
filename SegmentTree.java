@@ -1,56 +1,57 @@
-package implementation;
-import java.util.*;
-public class SegmentTree {
-    private static int[] tree;
-
-    public static void main(String[] args) {
-        Scanner sc=new Scanner(System.in);
-        int n=sc.nextInt();
-        tree=new int[4*n];
-        int[] arr=new int[n];
-        for(int i=0;i<n;i++)
-            arr[i]=sc.nextInt();
-        int q=sc.nextInt();
-        int[][] query=new int[q][2];
-        for(int i=0;i<q;i++)
-        {
-            query[i][0]=sc.nextInt();
-            query[i][1]=sc.nextInt();
-        }
-        build(0,0,n-1,arr);
-        for(int[] qr:query)
-        {
-            System.out.println(solve(0,0,n-1,qr[0],qr[1]));
-        }
-    }
-    private static void build(int ind,int low,int high,int[] arr)
+ class SegmentTree
     {
-        if(low==high)
+        int[] arr;
+        int[] tree;
+        int n;
+        public SegmentTree(int n,int[] arr)
         {
-            tree[ind]=arr[low];
-            return;
+            this.n=n;
+            this.arr=arr;
+            this.tree=new int[n*4];
+            buildTree(0,n-1,1);
         }
-        int mid=(low+high)/2;
-        build(2*ind+1,low,mid,arr);
-        build(2*ind+2,mid+1,high,arr);
-        tree[ind]=Math.max(tree[2*ind+1],tree[2*ind+2]);
+        private void buildTree(int tl,int tr,int idx)
+        {
+            if(tl>tr)return;
+            if(tl==tr)
+            {
+                tree[idx]=arr[tl];
+                return;
+            }
+            int tm=tl+(tr-tl)/2;
+            buildTree(tl,tm,idx*2);
+            buildTree(tm+1,tr,idx*2+1);
+            tree[idx]=tree[idx*2]+tree[idx*2+1];
+        }
+        public int getSum(int l,int r)
+        {
+            return sum(0,n-1,l,r,1);
+        }
+        private int sum(int tl,int tr,int l,int r,int idx)
+        {
+            if(tl>tr)return 0;
+            if(tr<l||tl>r)return 0;
+            if(tl>=l&&tr<=r)return tree[idx];
+            int tm=tl+(tr-tl)/2;
+            return sum(tl,tm,l,r,idx*2)+sum(tm+1,tr,l,r,idx*2+1);
+        }
+        public void update(int index,int val)
+        {
+            arr[index]=val;
+            update(0,n-1,1,index,val);
+        }
+        private void update(int tl,int tr,int idx,int index,int val)
+        {
+            if(tl>tr)return;
+            if(index<tl||index>tr)return;
+            if(tl==tr)
+            {
+                tree[idx]=arr[tl];
+                return;
+            }
+            int tm=tl+(tr-tl)/2;
+            update(tl,tm,idx*2,index,val);
+            update(tm+1,tr,idx*2+1,index,val);
+            tree[idx]=tree[idx*2]+tree[idx*2+1];
+        }
     }
-    private static int solve(int ind,int low,int high,int l,int r)
-    {
-        // completely lies - simply return its value
-        // do not lie - return INT_MIN
-        // overlaps - move into both directions
-
-        // first case - complete range lies inside our query range
-        if(low>=l&&high<=r)
-            return tree[ind];
-        // second case - do not lie inside range
-        if(high<l||low>r)return Integer.MIN_VALUE;
-        // third case- overlaps
-        int mid=(low+high)/2;
-        int left=solve(2*ind+1,low,mid,l,r);
-        int right=solve(2*ind+2,mid+1,high,l,r);
-        return Math.max(left,right);
-    }
-
-}
